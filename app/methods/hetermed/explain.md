@@ -26,10 +26,13 @@ and the per-subject effects get delta-method intervals.
 A generalized-lasso variant is also available, which shrinks the moderation
 toward a common effect; it uses a bootstrap for inference and is slower.
 
-## A note on the standard errors
+## Inference
 
-The original code applied `sqrt()` to already-computed standard errors when
-building its coefficient tables, which inflated every SE, z-value, p-value and
-confidence interval by roughly a factor of seven. That has been corrected, so the
-SEs shown here scale correctly with sample size and match a Monte Carlo
-reference. The per-subject NIE/NDE intervals were always computed correctly.
+The coefficient standard errors come from the model-based information matrix for
+the stacked parameter vector, scaled by the two residual variances (one for the
+mediator model, one for the outcome model). The per-subject $\mathrm{NIE}_i$ and
+$\mathrm{NDE}_i$ are non-linear functions of those coefficients, so their standard
+errors are obtained by the delta method, evaluated at each subject's own
+$(X_i, Z_i)$ — which is why the intervals differ from subject to subject.
+
+Both scale as $n^{-1/2}$, so quadrupling the sample size halves them.
