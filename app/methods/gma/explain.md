@@ -27,6 +27,15 @@ two-level model estimates it from the data. That is what the built-in example
 demonstrates: 120 series, and $\delta$ is recovered as about 0.51 against a true
 0.5 without ever being supplied.
 
+This page therefore offers only the **two-level** example, since the single-level
+one cannot show what the method is for. Both are in the R package if you want
+them at the console:
+
+```r
+d <- gma_example("twolevel")   # 120 series; delta estimated (what this page uses)
+d <- gma_example("single")     # one series; delta must be supplied
+```
+
 ## VAR lag order
 
 `p` sets the order of the autoregressive error process: how many previous time

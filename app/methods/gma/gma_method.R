@@ -213,7 +213,10 @@ register_method(list(
   example_note = paste("Two-level: 120 VAR(1) series of about 150 time points each,",
                        "with A = 0.5, B = -1, C = 0.5 and error correlation",
                        "delta = 0.5. Because there are several series, delta is",
-                       "identifiable and is estimated rather than supplied."),
+                       "identifiable and is estimated rather than supplied.",
+                       "The package also has a single-series example --",
+                       "gma_example('single') at the console -- but it is not",
+                       "offered here, since it cannot demonstrate estimating delta."),
   data_inputs = list(
     list(id = "dat", label = "Time series (Z, M, R)",
          help = "A table with columns Z (treatment at each time point), M (mediator) and R or Y (outcome), one row per time point in order. Add an 'id' column -- one block of rows per series -- or upload an .rds list of tables, to fit the two-level model across several series. Only then is the error correlation delta identifiable.")

@@ -54,19 +54,46 @@ med_version <- function() {
 # page) degrade gracefully rather than relying on it.
 MED_MIN_VERSION <- "0.2.0"
 
+#' Where the engine is installed, so a stale copy can be located.
+med_libpath <- function() {
+  p <- tryCatch(dirname(system.file(package = "MedMethods")), error = function(e) NA)
+  if (length(p) != 1 || is.na(p) || !nzchar(p)) NA_character_ else p
+}
+
+#' The one command that fixes a stale install, given where the app is running.
+med_fix_command <- function() {
+  if (file.exists("DESCRIPTION"))
+    "install.packages('.', repos = NULL, type = 'source')   # from the repository root"
+  else
+    "remotes::install_github('zhaoyi1026/MedMethods')"
+}
+
 #' Report any mismatch between the app and the installed engine.
+#'
+#' Checks the version string AND the actual capabilities, because a package can
+#' be reinstalled without the version changing. Every problem is phrased so the
+#' reader knows what to do about it.
 #' @return NULL if all good, otherwise a character vector of problems.
 med_engine_problems <- function() {
   probs <- character(0)
   v <- med_version()
   if (is.na(v)) return("MedMethods is not installed.")
+
   if (utils::compareVersion(v, MED_MIN_VERSION) < 0)
     probs <- c(probs, sprintf(
-      "MedMethods %s is installed but this app expects >= %s. Reinstall it from the repository root: install.packages('.', repos = NULL, type = 'source').",
-      v, MED_MIN_VERSION))
+      "Version %s is installed; this app expects %s or newer.", v, MED_MIN_VERSION))
+
   # capability checks, independent of the version string
   gen <- tryCatch(med_fn("gma_example"), error = function(e) NULL)
   if (!is.null(gen) && !("model.type" %in% names(formals(gen))))
-    probs <- c(probs, "The installed gma_example() has no 'model.type' argument, so it cannot generate the two-level example (the gma page falls back to its own generator).")
-  if (length(probs)) probs else NULL
+    probs <- c(probs, paste(
+      "The installed gma_example() has no 'model.type' argument, so it predates",
+      "the two-level example. The gma page still works -- it falls back to its own",
+      "generator -- but the installed package is out of date."))
+
+  if (!length(probs)) return(NULL)
+  lp <- med_libpath()
+  c(probs,
+    sprintf("Installed at: %s", if (is.na(lp)) "(unknown)" else lp),
+    sprintf("To fix, run this in R and then restart the app:  %s", med_fix_command()))
 }
