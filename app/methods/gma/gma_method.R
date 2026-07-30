@@ -179,7 +179,7 @@ register_method(list(
   params = list(
     list(id = "p", label = "VAR lag order (p)", type = "integer",
          default = 1, min = 1, max = 6,
-         help = "Order of the autoregressive error process. Lags of 2 and above work with asymptotic variances too (the companion-matrix construction was corrected in this package)."),
+         help = "Order of the autoregressive error process: how many previous time points the errors depend on. The first p observations are used to condition on, so a higher order costs degrees of freedom."),
     list(id = "estimate_delta", label = "Estimate the error correlation delta",
          type = "checkbox", default = FALSE,
          help = "Only possible with two-level data. For a single series delta must be supplied below."),

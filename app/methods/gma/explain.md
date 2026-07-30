@@ -26,7 +26,12 @@ estimates it.
 
 ## VAR lag order
 
-`p` sets the autoregressive order. Lags of 2 and above work with asymptotic
-variances in this package: the companion-matrix construction used by the
-asymptotic variance had mismatched blocks in the original code, which made every
-$p \ge 2$ fail, and that has been corrected here.
+`p` sets the order of the autoregressive error process: how many previous time
+points the errors at time $t$ depend on. Choose it the way you would for any
+VAR — from the autocorrelation of the residuals, or by comparing fits — and note
+that a higher order costs degrees of freedom, since the first $p$ observations
+are used to condition on.
+
+Both variance options work at any lag: the asymptotic variance is built from the
+VAR companion matrix, and the empirical alternative is available from the same
+sidebar.
