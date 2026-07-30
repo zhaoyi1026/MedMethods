@@ -1,5 +1,5 @@
 # =============================================================================
-# HD exposures -- mediation with high-dimensional exposures AND mediators
+# HDMediation -- mediation with high-dimensional exposures AND mediators
 # -----------------------------------------------------------------------------
 #   M = X alpha + E,        Y = X gamma + M beta + e
 # A pathway-lasso style penalty on mu = alpha diag(beta) selects individual
@@ -160,11 +160,12 @@ hdmed_plots <- function(res) {
 
 register_method(list(
   id = "hdmediation",
-  name = "HD exposures",
+  name = "HDMediation",
   full_name = "Mediation Analysis with High-Dimensional Exposures and Mediators",
-  short = "Both the exposures and the mediators are high-dimensional. A pathway-lasso penalty on the exposure-mediator effect products selects individual pathways out of the full grid.",
+  short = "Both sides are high-dimensional: many exposures AND many mediators. Three penalty terms select individual mediators, individual exposures, and direct effects out of the full q x p grid of candidate pathways.",
   status = "ready",
-  tags = c("high-dimensional exposures", "high-dimensional mediators", "ADMM"),
+  tags = c("high-dimensional exposures", "high-dimensional mediators",
+           "sparse group lasso", "ADMM"),
   paper = list(
     citation = "Zhao, Y., Li, L., & Alzheimer's Disease Neuroimaging Initiative (2022). Multimodal data integration via mediation analysis with high-dimensional exposures and mediators. Human Brain Mapping, 43(8), 2519-2533.",
     url = "https://doi.org/10.1002/hbm.25800"),
@@ -182,14 +183,16 @@ register_method(list(
   params = list(
     list(id = "lambda", label = "Penalty (lambda)", type = "numeric",
          default = 2.5, min = 0, max = 50, step = 0.25,
-         help = "The dense-to-empty transition is abrupt: on the built-in example lambda = 2 keeps 50 paths, 2.5 keeps 22, and 5 keeps none. Scan and select by BIC on real data."),
-    list(id = "pi", label = "l1 vs group split (pi)", type = "numeric",
+         help = "Overall strength. It is split across the three penalty terms as lambda1 = pi*lambda (mediator selection), lambda2 = (1-pi)*lambda (exposure selection) and lambda3 = lambda (direct effects). The dense-to-empty transition is abrupt: on the built-in example lambda = 2 keeps 50 paths, 2.5 keeps 22, and 5 keeps none. Scan and select by BIC on real data."),
+    list(id = "pi", label = "Mediator vs exposure selection (pi)", type = "numeric",
          default = 0.5, min = 0, max = 1, step = 0.05,
-         help = "1 = all weight on the elementwise l1 term, 0 = all on the per-exposure group term."),
-    list(id = "phi", label = "Ridge weight (phi)", type = "numeric",
-         default = 2, min = 0, max = 10, step = 0.5),
-    list(id = "delta", label = "Extra l1 on alpha / beta (delta)", type = "numeric",
-         default = 0.5, min = 0, max = 5, step = 0.1),
+         help = "Splits lambda between R1 and R2. pi = 1 puts all the weight on R1, which selects individual MEDIATORS by shrinking all paths through a mediator together; pi = 0 puts it all on the group term R2, which selects individual EXPOSURES by shrinking all paths out of an exposure together."),
+    list(id = "phi", label = "Convexity weight (c0)", type = "numeric",
+         default = 2, min = 0.5, max = 10, step = 0.5,
+         help = "Weight on the c0(alpha^2 + beta^2) term inside R1. |alpha*beta| alone is not convex; the sum is convex when c0 >= 1/2, which is why the minimum here is 0.5. The paper fixes c0 = 2."),
+    list(id = "delta", label = "Extra l1 on alpha / beta (c1)", type = "numeric",
+         default = 0.5, min = 0, max = 5, step = 0.1,
+         help = "Weight on the plain lasso term over the individual path coefficients alpha_jk and beta_k."),
     list(id = "use_pca", label = "Reduce exposures to principal components first",
          type = "checkbox", default = FALSE,
          help = "Required when the number of exposures approaches the sample size. Results are then reported per component."),

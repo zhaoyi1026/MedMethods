@@ -40,11 +40,11 @@ No compilation is needed — `MedMethods` is pure R.
 | Page | Method | Data it wants |
 |------|--------|---------------|
 | macc | Multilevel mediation under structured confounding | one table of `Z, M, R` (+ an `id` column for the multilevel fit) |
-| gma | Granger mediation for time series | one table of `Z, M, R`, one row per time point |
+| gma | Granger mediation for time series | one table of `Z, M, R` per time point; add an `id` column for several series |
 | spcma | Sparse principal component mediation | exposure vector, `n × p` mediators, outcome vector |
 | Pathway Lasso | Pathway estimation and selection | exposure vector, `n × k` mediators, outcome vector |
 | Multimodal | Two blocks of mediators | exposure, `n × p1` and `n × p2` mediator blocks, outcome |
-| HD exposures | High-dimensional exposures **and** mediators | `n × q` exposures, `n × p` mediators, outcome |
+| HDMediation | High-dimensional exposures **and** mediators | `n × q` exposures, `n × p` mediators, outcome |
 | PCMA | Principal component mediation | `n × p` exposures, `n × q` mediators, outcome |
 | cfma | Causal functional mediation | three `N × T` curve matrices (`Z`, `M`, `Y`) |
 | GMed | Graph (covariance) mediator | a list of `T_i × p` matrices, `n × nX` exposures, outcome |
@@ -79,11 +79,14 @@ exactly the shape the upload expects, so you can open one and match its structur
 
 ## Notes worth reading before interpreting output
 
-- **`macc` / `gma`:** with a *single* level or a *single* series the error
-  correlation `delta` is not identifiable and must be supplied. Leaving it at 0
-  assumes no confounding and biases the mediator-to-outcome path toward zero — on
-  the `gma` example the true `B = -1` is estimated as `-0.003` at `delta = 0`.
-- **`Pathway Lasso` / `HD exposures` / `Multimodal`:** these are tuning-sensitive
+- **`macc` / `gma`:** the error correlation `delta` is only identifiable with
+  *several* subjects or series, which is what both built-in examples provide — the
+  `gma` example recovers `delta = 0.507` against a true 0.5 without being told it.
+  If you upload a single level or a single series, `delta` must be supplied, and
+  leaving it at 0 assumes no confounding and biases the mediator-to-outcome path
+  toward zero (on single-series data with a true `B = -1`, `delta = 0` gives
+  roughly `-0.003`).
+- **`Pathway Lasso` / `HDMediation` / `Multimodal`:** these are tuning-sensitive
   and the jump from a dense solution to an empty one is abrupt. Read them as
   *pathway selection*; the penalties shrink effect magnitudes hard, so re-estimate
   the sizes of the selected pathways unpenalised.

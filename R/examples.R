@@ -40,7 +40,9 @@
 #' lines, e.g. `d <- gmed_example(); gmed(d$X, d$M, d$Y, nD = 1)`.
 #'
 #' @param n number of subjects (or time points, for `gma_example`).
-#' @param N number of subjects for the functional model (`cfma_example`).
+#' @param N number of subjects for the functional model (`cfma_example`), or
+#'   number of series (`gma_example`, two-level).
+#' @param n.time expected time points per series (`gma_example`, two-level).
 #' @param K number of sessions per subject (`macc_example`, three-level data).
 #' @param p mediator dimension. For `pcma_example` the number of exposures; for
 #'   `hdmediation_example` the number of mediators.
@@ -52,7 +54,9 @@
 #'   (`gmed_example`).
 #' @param ntp number of time points (`cfma_example`).
 #' @param n.trial trials per subject (`macc_example`, multilevel data).
-#' @param model.type `"single"`, `"twolevel"` or `"three"` (`macc_example`).
+#' @param model.type `"single"`, `"twolevel"` or `"three"` (`macc_example`);
+#'   `"single"` or `"twolevel"` (`gma_example`). Only the multilevel forms make
+#'   the error correlation `delta` identifiable.
 #' @param delta error correlation between the mediator and outcome models
 #'   (`macc_example`, `gma_example`).
 #' @param seed RNG seed.
@@ -119,23 +123,46 @@ macc_example <- function(model.type = c("single", "twolevel", "three"),
 
 #' @rdname med_examples
 #' @export
-gma_example <- function(n = 500L, delta = 0.5, seed = 1000L) {
+gma_example <- function(model.type = c("single", "twolevel"), n = 500L,
+                        N = 40L, n.time = 150L, delta = 0.5, seed = 1000L) {
+  model.type <- match.arg(model.type)
   A <- 0.5; B <- -1; C <- 0.5
   Sigma <- matrix(c(1, 2 * delta, 2 * delta, 4), 2, 2)
   # VAR(1) initial-condition covariance and transition matrix (2p x 2, p = 1)
   Delta <- matrix(c(2, delta * sqrt(2 * 8), delta * sqrt(2 * 8), 8), 2, 2)
   W     <- matrix(c(-0.809, 0.154, -0.618, -0.5), 2, 2)
+  truth <- list(A = A, B = B, C = C, C2 = C + A * B, ABp = A * B,
+                delta = delta, p = 1L, W = W)
 
+  if (model.type == "single") {
+    set.seed(1000L)
+    Z <- matrix(stats::rbinom(n, size = 1L, prob = 0.5), n, 1L)
+    set.seed(seed)
+    # NB: sim.data.ts.single() returns list(data, error); gma() wants `data`.
+    sim <- .med_get("gma", "sim.data.ts.single")(n, Z, A, B, C, Sigma, W,
+                                                 Delta = Delta, p = 1L,
+                                                 nburn = 1000L)
+    truth$error <- sim$error
+    return(list(dat = sim$data, model.type = "single", truth = truth))
+  }
+
+  # Two-level: N series, each its own VAR(1) process, with the subject-level
+  # coefficients drawn around (A, B, C) with covariance Lambda. Only here is the
+  # error correlation `delta` identifiable, because it is separated from the
+  # between-series variability.
+  Lambda <- diag(0.5, 3)
+  set.seed(2000L)
+  ni <- matrix(stats::rpois(N, n.time), N, 1)
   set.seed(1000L)
-  Z <- matrix(stats::rbinom(n, size = 1L, prob = 0.5), n, 1L)
+  Z.list <- lapply(seq_len(N), function(i)
+    matrix(stats::rbinom(ni[i, 1], size = 1L, prob = 0.5), ni[i, 1], 1L))
   set.seed(seed)
-  # NB: sim.data.ts.single() returns list(data, error); gma() wants `data`.
-  sim <- .med_get("gma", "sim.data.ts.single")(n, Z, A, B, C, Sigma, W,
-                                               Delta = Delta, p = 1L,
-                                               nburn = 1000L)
-  list(dat = sim$data,
-       truth = list(A = A, B = B, C = C, C2 = C + A * B, ABp = A * B,
-                    delta = delta, p = 1L, W = W, error = sim$error))
+  sim <- .med_get("gma", "sim.data.ts.two")(Z.list, N, theta = c(A, B, C),
+                                            Sigma, W, Delta = Delta, p = 1L,
+                                            Lambda = Lambda, nburn = 500L)
+  truth$Lambda <- Lambda
+  truth$A.series <- sim$A; truth$B.series <- sim$B; truth$C.series <- sim$C
+  list(dat = sim$data, model.type = "twolevel", truth = truth)
 }
 
 

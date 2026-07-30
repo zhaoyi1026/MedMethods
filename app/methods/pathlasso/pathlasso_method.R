@@ -193,7 +193,7 @@ register_method(list(
   params = list(
     list(id = "lambda", label = "Penalty (lambda)", type = "numeric",
          default = 0.001, min = 0, max = 10, step = 0.0005,
-         help = "On standardized data the useful range is small -- around 1e-3 here. The jump from dense to empty solutions is abrupt, so scan rather than guess."),
+         help = "Weight on the pathway term sum_j (|A_j B_j| + phi(A_j^2 + B_j^2)) plus |C|. On standardized data the useful range is small -- around 1e-3 here. The jump from dense to empty solutions is abrupt, so scan rather than guess."),
     list(id = "tune", label = "Pick lambda by selection stability",
          type = "checkbox", default = FALSE,
          help = "Scans 1e-4 to 1e-1 and keeps the most parsimonious stable value. Slower (it refits on split halves). Check the kappa table -- near-zero kappa means the criterion is uninformative for this sample size."),
@@ -202,9 +202,10 @@ register_method(list(
          help = "Only used when tuning by selection stability."),
     list(id = "omega", label = "Extra l1 on the paths (omega)", type = "numeric",
          default = 0, min = 0, max = 5, step = 0.05,
-         help = "Adds separate shrinkage on A and B. Note that even small values can zero out the whole solution."),
+         help = "Weight on sum_j (|A_j| + |B_j|) -- separate shrinkage on the individual paths, in the spirit of the elastic net. Note that even small values can zero out the whole solution."),
     list(id = "phi", label = "Ridge weight (phi)", type = "numeric",
-         default = 1, min = 0, max = 10, step = 0.1),
+         default = 1, min = 0.5, max = 10, step = 0.1,
+         help = "Weight on the phi(A_j^2 + B_j^2) term. |A_j B_j| alone is not convex; |ab| + phi(a^2 + b^2) is convex if and only if phi >= 1/2, which is why the minimum here is 0.5."),
     list(id = "max.itr", label = "Max ADMM iterations", type = "integer",
          default = 3000, min = 100, max = 20000)
   ),

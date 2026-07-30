@@ -6,17 +6,51 @@ $$M = Z A + E, \qquad Y = Z C + M B + e$$
 
 Mediator $j$ carries indirect effect $A_j B_j$.
 
-## What is different about the penalty
+## The penalty
 
-An ordinary lasso would penalise $A$ and $B$ separately. That is awkward,
-because a mediator matters only if **both** of its paths are non-zero: a large
-$A_j$ with $B_j = 0$ is not mediation. Pathway Lasso penalises the
-**product**
+An ordinary lasso would penalise $A$ and $B$ separately. That is awkward, because
+a mediator matters only if **both** of its paths are non-zero: a large $A_j$ with
+$B_j = 0$ is not mediation. Pathway Lasso penalises the *product* directly, so
+whole pathways are selected or dropped as units.
 
-$$\sum_j |A_j B_j| \;+\; \text{ridge and } \ell_1 \text{ terms}$$
+The criterion minimised is
 
-so whole pathways are selected or dropped as units. The optimisation is done by
-ADMM, splitting the product constraint off into its own variable.
+$$f(A,B,C) = \tfrac{1}{2}\,\ell(A,B,C)
+  + \lambda\left\{\sum_{j=1}^{K}\Big(|A_j B_j| + \phi\,(A_j^2 + B_j^2)\Big) + |C|\right\}
+  + \omega\left\{\sum_{j=1}^{K}\big(|A_j| + |B_j|\big)\right\}$$
+
+with the loss
+
+$$\ell(A,B,C) = \operatorname{tr}\!\Big\{\Omega_1 (M - ZA)^{\top}(M - ZA)\Big\}
+  + w_2\,(R - ZC - MB)^{\top}(R - ZC - MB),$$
+
+where $\Omega_1 = \Sigma_1^{-1}$ and $w_2 = \sigma_2^{-2}$. Standardizing the data
+to unit scale lets these be replaced by an identity matrix and one, which is what
+this implementation does.
+
+Writing the two penalty blocks as $P_1$ and $P_2$, the criterion is
+$\tfrac{1}{2}\ell + \lambda P_1(A,B,C) + \omega P_2(A,B)$. $P_1$ shrinks the
+pathway effects $A_jB_j$ and the direct effect $C$; $P_2$ adds separate shrinkage
+on the individual $A_j$ and $B_j$, in the spirit of the elastic net.
+
+**The role of $\phi$.** The quadratic term is not incidental — it is what makes
+the penalty usable. $|ab|$ alone is *not* convex, and
+
+$$v(a,b) = |ab| + \phi\,(a^2 + b^2)$$
+
+is convex **if and only if $\phi \ge 1/2$**, and strictly convex when
+$\phi > 1/2$. That is why the parameter cannot be set below $1/2$ here.
+
+The optimisation is done by ADMM, splitting the product constraint off into its
+own variable.
+
+## Tuning parameters
+
+| Sidebar | Symbol | Effect |
+|---------|--------|--------|
+| Penalty | $\lambda$ | overall strength on the pathway effects and $C$ |
+| Ridge weight | $\phi$ | convexity; $\ge 1/2$ required |
+| Extra $\ell_1$ on the paths | $\omega$ | separate shrinkage on individual $A_j$, $B_j$ |
 
 ## Choosing lambda
 

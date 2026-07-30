@@ -16,13 +16,16 @@ unmeasured mediator--outcome confounding.
 ## Identification
 
 For a **single series** $\delta$ is not identifiable and must be supplied. The
-built-in example makes the consequence concrete: the true $B = -1$, and
+consequence is not subtle: on simulated single-series data with a true $B = -1$,
 
 - at $\delta = 0$ (assume no confounding) the fit gives $\hat B \approx -0.003$;
 - at the true $\delta = 0.5$ it gives $\hat B \approx -1.00$.
 
-With **several series** the correlation is identifiable and the two-level model
-estimates it.
+With **several series** the correlation *is* identifiable, because the
+between-series variability separates it from the mediation paths, and the
+two-level model estimates it from the data. That is what the built-in example
+demonstrates: 120 series, and $\delta$ is recovered as about 0.51 against a true
+0.5 without ever being supplied.
 
 ## VAR lag order
 

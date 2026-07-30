@@ -8,8 +8,12 @@
 # supply it, or use the two-level model across subjects.
 # =============================================================================
 
+# Two-level by default: the error correlation delta is only identifiable across
+# several series, so a single-series example could never demonstrate estimating
+# it. 120 series of about 150 time points each -- enough for delta and all three
+# path coefficients to be recovered (about 14s to fit).
 gma_app_example <- function() {
-  d <- med_fn("gma_example")(n = 500L)
+  d <- med_fn("gma_example")("twolevel", N = 120L, n.time = 150L)
   out <- list(dat = d$dat, truth = d$truth)
   out$preview_ui <- gma_preview(out)
   out
@@ -46,11 +50,14 @@ gma_preview <- function(d) {
     if (!multi)
       div(class = "alert alert-warning p-2 small mb-0 mt-2",
           bsicons::bs_icon("exclamation-triangle"),
-          " With a single series the error correlation is NOT identifiable: supply delta below. At delta = 0 the mediator-to-outcome path is biased toward zero (on the built-in example, B is estimated as -0.003 rather than -1)."),
+          " With a single series the error correlation is NOT identifiable: supply delta below. At delta = 0 the mediator-to-outcome path is biased toward zero -- on simulated single-series data with a true B = -1, delta = 0 gives about -0.003. Add an id column to fit several series and have delta estimated instead."),
     if (!is.null(d$truth))
       tags$p(class = "small text-success mt-2", bsicons::bs_icon("check-circle"),
-             sprintf(" Simulated VAR(1) series: A = %.1f, B = %.0f, C = %.1f, delta = %.1f.",
-                     d$truth$A, d$truth$B, d$truth$C, d$truth$delta))
+             sprintf(" Simulated VAR(1) series: A = %.1f, B = %.0f, C = %.1f, delta = %.1f%s",
+                     d$truth$A, d$truth$B, d$truth$C, d$truth$delta,
+                     if (multi)
+                       " -- and with several series delta can be estimated rather than supplied."
+                     else "."))
   )
 }
 
@@ -169,27 +176,29 @@ register_method(list(
     citation = "Zhao, Y., & Luo, X. (2019). Granger mediation analysis of multiple time series with an application to functional magnetic resonance imaging. Biometrics, 75(3), 788-798.",
     url = "https://doi.org/10.1111/biom.13056"),
   explain = file.path(APP_DIR, "methods", "gma", "explain.md"),
-  example_note = paste("A single VAR(1) series of 500 time points with",
-                       "A = 0.5, B = -1, C = 0.5 and error correlation delta = 0.5.",
-                       "Try delta = 0 to see the bias it induces."),
+  example_note = paste("Two-level: 120 VAR(1) series of about 150 time points each,",
+                       "with A = 0.5, B = -1, C = 0.5 and error correlation",
+                       "delta = 0.5. Because there are several series, delta is",
+                       "identifiable and is estimated rather than supplied."),
   data_inputs = list(
     list(id = "dat", label = "Time series (Z, M, R)",
-         help = "A table with columns Z (treatment at each time point), M (mediator) and R or Y (outcome), one row per time point in order. Add an 'id' column, or upload an .rds list of tables, to fit the two-level model across several series.")
+         help = "A table with columns Z (treatment at each time point), M (mediator) and R or Y (outcome), one row per time point in order. Add an 'id' column -- one block of rows per series -- or upload an .rds list of tables, to fit the two-level model across several series. Only then is the error correlation delta identifiable.")
   ),
   params = list(
     list(id = "p", label = "VAR lag order (p)", type = "integer",
          default = 1, min = 1, max = 6,
          help = "Order of the autoregressive error process: how many previous time points the errors depend on. The first p observations are used to condition on, so a higher order costs degrees of freedom."),
     list(id = "estimate_delta", label = "Estimate the error correlation delta",
-         type = "checkbox", default = FALSE,
-         help = "Only possible with two-level data. For a single series delta must be supplied below."),
+         type = "checkbox", default = TRUE,
+         help = "Only possible with two-level data (several series), which is what the built-in example provides. For a single series delta is not identifiable and must be supplied below."),
     list(id = "delta", label = "delta, if supplied", type = "numeric",
          default = 0.5, min = -0.95, max = 0.95, step = 0.05,
          help = "For a single series this is required. Note that 0 assumes no confounding and biases the mediator-to-outcome path toward zero."),
     list(id = "method", label = "Two-level estimator", type = "select",
-         choices = c("Hierarchical likelihood (HL)" = "HL", "Two-stage (TS)" = "TS",
+         choices = c("Two-stage (TS)" = "TS", "Hierarchical likelihood (HL)" = "HL",
                      "HL then TS" = "HL-TS"),
-         default = "HL", help = "Ignored for a single series."),
+         default = "TS",
+         help = "Ignored for a single series. TS is the quicker of the two; HL maximises the hierarchical likelihood and is slower."),
     list(id = "var.asmp", label = "Asymptotic variances (single series)",
          type = "checkbox", default = TRUE,
          help = "Uses the VAR companion-matrix asymptotic variance rather than the empirical one."),
@@ -197,7 +206,13 @@ register_method(list(
          default = 0.95, min = 0.5, max = 0.999, step = 0.01)
   ),
   example = gma_app_example,
-  export_example = function(d) list(dat = d$dat),
+  export_example = function(d) {
+    dd <- d$dat
+    if (is.data.frame(dd)) return(list(dat = dd))
+    long <- do.call(rbind, lapply(seq_along(dd), function(i)
+      cbind(id = names(dd)[i] %||% i, dd[[i]])))
+    list(dat = long)
+  },
   parse = gma_app_parse,
   describe_data = gma_describe,
   run = gma_run,
