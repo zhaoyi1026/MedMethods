@@ -225,42 +225,42 @@ fit.inf.OLS<-function(X,M,Y,Z,out.med.inter,conf.level=0.95)
   # organize output
   zv<-qnorm(1-(1-conf.level)/2)
   
-  alpha0.out<-data.frame(Estimate=out.med.inter$alpha0,SE=sqrt(Theta.se[1:p,1]))
+  alpha0.out<-data.frame(Estimate=out.med.inter$alpha0,SE=(Theta.se[1:p,1]))
   alpha0.out$zvalue<-alpha0.out$Estimate/alpha0.out$SE
   alpha0.out$pvalue<-(1-pnorm(abs(alpha0.out$zvalue)))*2
   alpha0.out$LB<-alpha0.out$Estimate-zv*alpha0.out$SE
   alpha0.out$UB<-alpha0.out$Estimate+zv*alpha0.out$SE
   rownames(alpha0.out)<-colnames(Z)
   
-  alpha1.out<-data.frame(Estimate=out.med.inter$alpha1,SE=sqrt(Theta.se[(p+1):(2*p),1]))
+  alpha1.out<-data.frame(Estimate=out.med.inter$alpha1,SE=(Theta.se[(p+1):(2*p),1]))
   alpha1.out$zvalue<-alpha1.out$Estimate/alpha1.out$SE
   alpha1.out$pvalue<-(1-pnorm(abs(alpha1.out$zvalue)))*2
   alpha1.out$LB<-alpha1.out$Estimate-zv*alpha1.out$SE
   alpha1.out$UB<-alpha1.out$Estimate+zv*alpha1.out$SE
   rownames(alpha1.out)<-colnames(Z)
   
-  gamma0.out<-data.frame(Estimate=out.med.inter$gamma0,SE=sqrt(Theta.se[1:p,2]))
+  gamma0.out<-data.frame(Estimate=out.med.inter$gamma0,SE=(Theta.se[1:p,2]))
   gamma0.out$zvalue<-gamma0.out$Estimate/gamma0.out$SE
   gamma0.out$pvalue<-(1-pnorm(abs(gamma0.out$zvalue)))*2
   gamma0.out$LB<-gamma0.out$Estimate-zv*gamma0.out$SE
   gamma0.out$UB<-gamma0.out$Estimate+zv*gamma0.out$SE
   rownames(gamma0.out)<-colnames(Z)
   
-  gamma1.out<-data.frame(Estimate=out.med.inter$gamma1,SE=sqrt(Theta.se[(p+1):(2*p),2]))
+  gamma1.out<-data.frame(Estimate=out.med.inter$gamma1,SE=(Theta.se[(p+1):(2*p),2]))
   gamma1.out$zvalue<-gamma1.out$Estimate/gamma1.out$SE
   gamma1.out$pvalue<-(1-pnorm(abs(gamma1.out$zvalue)))*2
   gamma1.out$LB<-gamma1.out$Estimate-zv*gamma1.out$SE
   gamma1.out$UB<-gamma1.out$Estimate+zv*gamma1.out$SE
   rownames(gamma1.out)<-colnames(Z)
   
-  beta0.out<-data.frame(Estimate=out.med.inter$beta0,SE=sqrt(Theta.se[2*p+1,2]))
+  beta0.out<-data.frame(Estimate=out.med.inter$beta0,SE=(Theta.se[2*p+1,2]))
   beta0.out$zvalue<-beta0.out$Estimate/beta0.out$SE
   beta0.out$pvalue<-(1-pnorm(abs(beta0.out$zvalue)))*2
   beta0.out$LB<-beta0.out$Estimate-zv*beta0.out$SE
   beta0.out$UB<-beta0.out$Estimate+zv*beta0.out$SE
   rownames(beta0.out)<-"M"
   
-  beta1.out<-data.frame(Estimate=out.med.inter$beta1,SE=sqrt(Theta.se[2*p+2,2]))
+  beta1.out<-data.frame(Estimate=out.med.inter$beta1,SE=(Theta.se[2*p+2,2]))
   beta1.out$zvalue<-beta1.out$Estimate/beta1.out$SE
   beta1.out$pvalue<-(1-pnorm(abs(beta1.out$zvalue)))*2
   beta1.out$LB<-beta1.out$Estimate-zv*beta1.out$SE

@@ -189,6 +189,39 @@ patch_pathwaylasso <- function(lines) {
 }
 
 ##############################################################################
+# heteromed correction: fit.inf.OLS() applies sqrt() TWICE to the coefficient
+# standard errors. It computes
+#     vecTheta.se <- sqrt(diag(cov.vecTheta))   # already standard errors
+#     Theta.se    <- matrix(vecTheta.se, ncol = 2)
+# and then builds every coefficient table with `SE = sqrt(Theta.se[...])`, i.e.
+# the square root of a standard error -- dimensionally incoherent, and it
+# inflates every SE, z-value, p-value and CI in the alpha/beta/gamma tables.
+#
+# Confirmed empirically two ways on hetermed_example():
+#   (a) the reported SE scales as n^(-1/4), not n^(-1/2): the ratio
+#       SE(n=600)/SE(n=2400) is 1.42, whereas a correct SE gives 2.00;
+#   (b) the SQUARE of the reported SE matches the Monte Carlo SD of alpha1-hat
+#       over 300 replicates, while the reported SE itself is ~7x too large.
+# The NIE/NDE tables use cov.vecTheta directly (t(h) %*% cov.vecTheta %*% h) and
+# are unaffected.
+#
+# Fix: drop the six spurious sqrt() calls so the tables report Theta.se itself.
+##############################################################################
+patch_heteromed <- function(lines) {
+  idx <- grep("^\\s*(alpha0|alpha1|gamma0|gamma1|beta0|beta1)\\.out<-data\\.frame\\(Estimate=.*SE=sqrt\\(Theta\\.se\\[",
+              lines)
+  if (length(idx) != 6L)
+    stop("heteromed patch: expected 6 coefficient-table lines, found ", length(idx))
+  for (i in idx) {
+    before <- lines[i]
+    lines[i] <- sub("SE=sqrt(Theta.se[", "SE=(Theta.se[", lines[i], fixed = TRUE)
+    if (identical(before, lines[i]))
+      stop("heteromed patch: substitution failed on line ", i)
+  }
+  lines
+}
+
+##############################################################################
 # Write inst/method/<id>.R
 ##############################################################################
 dir.create(file.path(PKG, "inst", "method"), recursive = TRUE, showWarnings = FALSE)
@@ -203,6 +236,7 @@ for (id in names(METHODS)) {
                  gma          = patch_gma(body),
                  gmed         = patch_gmed(body),
                  pathwaylasso = patch_pathwaylasso(body),
+                 heteromed    = patch_heteromed(body),
                  body)
 
   header <- c(

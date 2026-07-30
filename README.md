@@ -10,6 +10,9 @@ of high-dimensional mediators, functional treatments/mediators/outcomes, covaria
 Each method is a thin wrapper over the authors' original implementation, so results
 match the published code exactly.
 
+This repository hosts the **R package** (below) plus a companion
+[**Python package**](#python-package).
+
 ## Methods
 
 | Function | Method | Notes |
@@ -222,6 +225,39 @@ Three corrections to the original code are applied at assembly time:
   `gmed_boot()`, which calls the coefficient routine on every replicate.
 - **`pathlasso_sim()` read `A[1,1]` instead of its argument `a`** in the first-mediator
   branch, silently picking up an unrelated object.
+- **`hetermed_inf()`'s coefficient standard errors were square-rooted twice.** The
+  routine computes `sqrt(diag(cov))` — already standard errors — and then built each
+  table with `SE = sqrt(...)` of that, inflating every SE, z-value, p-value and
+  confidence interval in the `alpha`/`beta`/`gamma` tables by roughly a factor of 7.
+  Confirmed two ways: the reported value scaled as `n^(-1/4)` instead of `n^(-1/2)`
+  (the ratio SE(n=600)/SE(n=2400) was 1.42, where a correct SE gives 2.00), and its
+  *square* matched the Monte Carlo SD of the estimator over 300 replicates. The
+  NIE/NDE tables use the covariance matrix directly and were always correct.
+
+## Python package
+
+A companion Python package, **`medmethods`** (in [`Python/`](Python/)), ports these
+methods to `numpy`/`scipy`. Implemented and cross-checked against this R package:
+`hetermed`, `hdmediation` and `pathlasso` are **bit-identical**; `pcma` and `gmed` are
+verified (projection cosines 1.000 and 0.99997 against R). The remaining five exist and
+raise `NotImplementedError` naming the R function to use instead.
+
+```bash
+git clone https://github.com/zhaoyi1026/MedMethods.git
+pip install ./MedMethods/Python
+```
+
+```python
+import medmethods as mm
+d   = mm.examples.pathlasso_example()
+fit = mm.pathlasso(d["X"], d["M"], d["Y"], lam=0.001, omega=0, phi=1)
+fit["AB"]        # pathway effects
+```
+
+Requires Python ≥ 3.7, `numpy` ≥ 1.16, `scipy` ≥ 1.2. See
+**[Python/USAGE.md](Python/USAGE.md)** for how to use each method and
+**[Python/README.md](Python/README.md)** for verification details and the porting
+roadmap.
 
 ## References
 

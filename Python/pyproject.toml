@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medmethods"
+version = "0.1.0"
+description = "Causal mediation analysis methods for hierarchical, time series, high-dimensional, functional and covariance-mediator data, in Python"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "GPL-3.0-or-later"}
+authors = [{name = "Yi Zhao"}]
+dependencies = [
+    "numpy>=1.16",
+    "scipy>=1.2",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=4"]
+
+[tool.setuptools.packages.find]
+include = ["medmethods*"]
