@@ -15,13 +15,13 @@ whole pathways are selected or dropped as units.
 
 The criterion minimised is
 
-$$f(A,B,C) = \tfrac{1}{2}\,\ell(A,B,C)
+$$f(A,B,C) = \frac{1}{2}\,\ell(A,B,C)
   + \lambda\left\{\sum_{j=1}^{K}\Big(|A_j B_j| + \phi\,(A_j^2 + B_j^2)\Big) + |C|\right\}
   + \omega\left\{\sum_{j=1}^{K}\big(|A_j| + |B_j|\big)\right\}$$
 
 with the loss
 
-$$\ell(A,B,C) = \operatorname{tr}\!\Big\{\Omega_1 (M - ZA)^{\top}(M - ZA)\Big\}
+$$\ell(A,B,C) = \mathrm{tr}\!\Big\{\Omega_1 (M - ZA)^{\top}(M - ZA)\Big\}
   + w_2\,(R - ZC - MB)^{\top}(R - ZC - MB),$$
 
 where $\Omega_1 = \Sigma_1^{-1}$ and $w_2 = \sigma_2^{-2}$. Standardizing the data
@@ -29,7 +29,7 @@ to unit scale lets these be replaced by an identity matrix and one, which is wha
 this implementation does.
 
 Writing the two penalty blocks as $P_1$ and $P_2$, the criterion is
-$\tfrac{1}{2}\ell + \lambda P_1(A,B,C) + \omega P_2(A,B)$. $P_1$ shrinks the
+$\frac{1}{2}\ell + \lambda P_1(A,B,C) + \omega P_2(A,B)$. $P_1$ shrinks the
 pathway effects $A_jB_j$ and the direct effect $C$; $P_2$ adds separate shrinkage
 on the individual $A_j$ and $B_j$, in the spirit of the elastic net.
 

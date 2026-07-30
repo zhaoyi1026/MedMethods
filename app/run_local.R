@@ -50,6 +50,21 @@ if (!requireNamespace("MedMethods", quietly = TRUE)) {
 cat("engine:    MedMethods", as.character(utils::packageVersion("MedMethods")),
     sprintf("(%d methods)\n", length(MedMethods::med_methods())))
 
+# The app and the package are installed separately and can drift. Warn loudly
+# rather than letting a stale engine surface as "unused arguments" mid-page.
+MED_MIN_VERSION <- "0.2.0"
+.v <- as.character(utils::packageVersion("MedMethods"))
+if (utils::compareVersion(.v, MED_MIN_VERSION) < 0) {
+  cat("\n!! The installed MedMethods (", .v, ") is older than this app expects (",
+      MED_MIN_VERSION, ").\n", sep = "")
+  cat("   Reinstall from the repository root:\n")
+  cat("     install.packages('.', repos = NULL, type = 'source')\n")
+  cat("   or: remotes::install_github('zhaoyi1026/MedMethods')\n\n")
+  if (!check_only) {
+    cat("   Continuing anyway -- pages fall back where they can.\n\n")
+  }
+}
+
 # ---- the UI packages --------------------------------------------------------
 missing <- UI_PKGS[!vapply(UI_PKGS, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing)) {

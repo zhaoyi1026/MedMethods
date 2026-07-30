@@ -11,12 +11,46 @@
 # Two-level by default: the error correlation delta is only identifiable across
 # several series, so a single-series example could never demonstrate estimating
 # it. 120 series of about 150 time points each -- enough for delta and all three
-# path coefficients to be recovered (about 14s to fit).
-gma_app_example <- function() {
-  d <- med_fn("gma_example")("twolevel", N = 120L, n.time = 150L)
-  out <- list(dat = d$dat, truth = d$truth)
+# path coefficients to be recovered (about 15s to fit).
+#
+# The two-level branch of gma_example() was added after the package's first
+# release, so an older installed MedMethods has a gma_example() that does not
+# accept `model.type` and would fail with "unused arguments". Rather than depend
+# on that, build the data here from gma_sim_two(), which has been exported all
+# along; med_gen_two_level() below is the same construction the package uses.
+gma_app_example <- function(N = 120L, n.time = 150L) {
+  gen <- med_fn("gma_example")
+  if ("model.type" %in% names(formals(gen))) {
+    d <- gen("twolevel", N = N, n.time = n.time)
+    out <- list(dat = d$dat, truth = d$truth)
+  } else {
+    out <- gma_two_level_fallback(N, n.time)
+  }
   out$preview_ui <- gma_preview(out)
   out
+}
+
+# Self-contained two-level generator, used when the installed package predates
+# gma_example("twolevel"). Identical construction: N series, each its own VAR(1)
+# process, series-level coefficients drawn around (A, B, C) with covariance Lambda.
+gma_two_level_fallback <- function(N = 120L, n.time = 150L, delta = 0.5) {
+  A <- 0.5; B <- -1; C <- 0.5
+  Sigma <- matrix(c(1, 2 * delta, 2 * delta, 4), 2, 2)
+  Delta <- matrix(c(2, delta * sqrt(2 * 8), delta * sqrt(2 * 8), 8), 2, 2)
+  W     <- matrix(c(-0.809, 0.154, -0.618, -0.5), 2, 2)
+  Lambda <- diag(0.5, 3)
+  set.seed(2000L)
+  ni <- matrix(stats::rpois(N, n.time), N, 1)
+  set.seed(1000L)
+  Z.list <- lapply(seq_len(N), function(i)
+    matrix(stats::rbinom(ni[i, 1], size = 1L, prob = 0.5), ni[i, 1], 1L))
+  set.seed(1000L)
+  sim <- med_fn("gma_sim_two")(Z.list, N, theta = c(A, B, C), Sigma, W,
+                               Delta = Delta, p = 1L, Lambda = Lambda,
+                               nburn = 500L)
+  list(dat = sim$data,
+       truth = list(A = A, B = B, C = C, C2 = C + A * B, ABp = A * B,
+                    delta = delta, p = 1L, W = W, Lambda = Lambda))
 }
 
 gma_app_parse <- function(files, opts) {

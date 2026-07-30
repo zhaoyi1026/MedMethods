@@ -104,6 +104,16 @@ home_ui <- function() {
           bsicons::bs_icon("hdd"), tags$b(" Runs locally. "),
           "Your data stays on this machine: uploads are read into the R session, used for the fit, and never written anywhere or sent off the machine."
         ),
+        # the app and the engine are installed separately, so they can drift
+        local({
+          probs <- med_engine_problems()
+          if (is.null(probs)) NULL else div(
+            class = "alert alert-warning small",
+            bsicons::bs_icon("exclamation-triangle"),
+            tags$b(" The installed MedMethods package does not match this app."),
+            tags$ul(lapply(probs, tags$li))
+          )
+        }),
         tags$hr(),
         tags$p(class = "text-muted small",
                sprintf("%d of %d methods wired.%s",

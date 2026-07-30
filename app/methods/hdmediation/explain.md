@@ -11,23 +11,23 @@ of them -- 400 in the built-in example.
 
 The criterion minimised is
 
-$$\tfrac{1}{2}\,\mathcal{L}(\alpha,\beta,\gamma)
-  + \lambda_1 \mathcal{R}_1(\alpha,\beta)
-  + \lambda_2 \mathcal{R}_2(\mu)
-  + \lambda_3 \mathcal{R}_3(\gamma)$$
+$$\frac{1}{2}\,L(\alpha,\beta,\gamma)
+  + \lambda_1 R_1(\alpha,\beta)
+  + \lambda_2 R_2(\mu)
+  + \lambda_3 R_3(\gamma)$$
 
 with the loss
 
-$$\mathcal{L}(\alpha,\beta,\gamma)
-  = \operatorname{tr}\!\Big\{(M - \tilde{X}\alpha)^{\top}(M - \tilde{X}\alpha)\Big\}
+$$L(\alpha,\beta,\gamma)
+  = \mathrm{tr}\!\Big\{(M - \tilde{X}\alpha)^{\top}(M - \tilde{X}\alpha)\Big\}
   + (Y - \tilde{X}\gamma - M\beta)^{\top}(Y - \tilde{X}\gamma - M\beta)$$
 
 and three penalty terms, each doing a different job.
 
-**$\mathcal{R}_1$ selects individual mediators.** It generalises the Pathway
+**$R_1$ selects individual mediators.** It generalises the Pathway
 Lasso penalty to $q$ exposures:
 
-$$\mathcal{R}_1(\alpha,\beta) =
+$$R_1(\alpha,\beta) =
   \sum_{j=1}^{q}\sum_{k=1}^{p}\Big\{|\alpha_{jk}\beta_k| + c_0\big(\alpha_{jk}^2 + \beta_k^2\big)\Big\}
   + c_1\left(\sum_{j=1}^{q}\sum_{k=1}^{p}|\alpha_{jk}| + \sum_{k=1}^{p}|\beta_k|\right)$$
 
@@ -37,16 +37,16 @@ selection. The quadratic term is what makes it convex: $|ab| + c_0(a^2+b^2)$ is
 convex when $c_0 \ge 1/2$, and the implementation fixes $c_0 = 2$. The final term
 is an ordinary lasso on the individual path coefficients.
 
-**$\mathcal{R}_2$ selects individual exposures.** A group lasso over each
+**$R_2$ selects individual exposures.** A group lasso over each
 exposure's row of pathway effects $\mu_{jk} = \alpha_{jk}\beta_k$:
 
-$$\mathcal{R}_2(\mu) = \sum_{j=1}^{q}\sqrt{p}
+$$R_2(\mu) = \sum_{j=1}^{q}\sqrt{p}
   \left(\sum_{k=1}^{p}\mu_{jk}^2\right)^{1/2}$$
 
 so all paths originating from exposure $\tilde{X}_j$ are shrunk to zero together.
 
-**$\mathcal{R}_3$ selects direct effects.** A plain lasso,
-$\mathcal{R}_3(\gamma) = \sum_{j=1}^{q}|\gamma_j|$.
+**$R_3$ selects direct effects.** A plain lasso,
+$R_3(\gamma) = \sum_{j=1}^{q}|\gamma_j|$.
 
 Introducing $\mu_{jk} = \alpha_{jk}\beta_k$ as a separate parameter turns the
 problem into a **sparse group lasso**, which has a closed-form solution, and the

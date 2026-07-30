@@ -1,8 +1,8 @@
 Package: MedMethods
 Type: Package
 Title: Mediation Analysis Methods for Complex and High-Dimensional Data
-Version: 0.1.0
-Date: 2026-07-29
+Version: 0.2.0
+Date: 2026-07-30
 Authors@R: person("Yi", "Zhao", email = "zhaoyi1026@gmail.com",
                   role = c("aut", "cre"))
 Description: A unified collection of causal mediation analysis methods for
