@@ -143,8 +143,12 @@ gma_example <- function(n = 500L, delta = 0.5, seed = 1000L) {
 #' @export
 spcma_example <- function(n = 200L, p = 50L, seed = 2026L) {
   # Piecewise-constant leading loadings -- what the fused-lasso penalty in
-  # spcma() is designed to recover: blocks of 10 consecutive mediators.
-  nb  <- 10L
+  # spcma() is designed to recover: three blocks of consecutive mediators.
+  # The block width adapts to p so that the three blocks always fit (at p = 50,
+  # the default, this gives the intended width of 10).
+  if (p < 6L) stop("spcma_example(): p must be at least 6.")
+  nb  <- max(1L, p %/% 5L)
+  if (3L * nb > p) nb <- p %/% 3L
   Phi0 <- matrix(0, p, p)
   Phi0[1:nb, 1]                  <- 1
   Phi0[(nb + 1):(2 * nb), 2]     <- 1

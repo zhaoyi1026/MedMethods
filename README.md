@@ -10,8 +10,8 @@ of high-dimensional mediators, functional treatments/mediators/outcomes, covaria
 Each method is a thin wrapper over the authors' original implementation, so results
 match the published code exactly.
 
-This repository hosts the **R package** (below) plus a companion
-[**Python package**](#python-package).
+This repository hosts the **R package** (below), a companion
+[**Shiny app**](#shiny-app), and a [**Python package**](#python-package).
 
 ## Methods
 
@@ -236,6 +236,40 @@ the estimator over 300 replicates. The NIE/NDE tables use the covariance matrix 
 and were always correct. The assembly step now *asserts* the correction is present, so
 pointing the manifest back at an uncorrected source fails the build rather than silently
 regressing.
+
+## Shiny app
+
+A local **MedMethods Explorer** app (in [`app/`](app/)) gives every method a
+point-and-click page: read the model, fit the built-in simulated example, or upload
+your own data, then download every result table and plot. It uses this package as
+its engine, and runs entirely on your machine — uploads are read into the R
+session and never written to disk or sent anywhere.
+
+```r
+install.packages(c("shiny", "bslib", "bsicons", "DT", "plotly",
+                   "shinycssloaders", "markdown"))
+shiny::runApp("app", launch.browser = TRUE)     # from the repository root
+```
+
+Or let the launcher install what is missing and start it:
+
+```bash
+Rscript app/run_local.R          # serves on http://127.0.0.1:7800
+```
+
+All ten methods have a page. Each one has an **Overview** tab (the model in maths,
+what the parameters do, and the practical cautions), a **Run / Demo** tab (built-in
+example or upload, plus a parameter form), and **Results** as downloadable tables
+and plots. Because the example generators return the true parameters, running an
+example also produces a *Truth vs estimate* table.
+
+See **[app/README.md](app/README.md)** for the per-method data shapes, how to
+supply your own files, and how to add a method. A headless check of every page is
+available without a browser:
+
+```bash
+Rscript app/tools/check_plugins.R app     # 10 of 10 plugins OK
+```
 
 ## Python package
 
