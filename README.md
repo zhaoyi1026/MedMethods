@@ -225,14 +225,17 @@ Three corrections to the original code are applied at assembly time:
   `gmed_boot()`, which calls the coefficient routine on every replicate.
 - **`pathlasso_sim()` read `A[1,1]` instead of its argument `a`** in the first-mediator
   branch, silently picking up an unrelated object.
-- **`hetermed_inf()`'s coefficient standard errors were square-rooted twice.** The
-  routine computes `sqrt(diag(cov))` — already standard errors — and then built each
-  table with `SE = sqrt(...)` of that, inflating every SE, z-value, p-value and
-  confidence interval in the `alpha`/`beta`/`gamma` tables by roughly a factor of 7.
-  Confirmed two ways: the reported value scaled as `n^(-1/4)` instead of `n^(-1/2)`
-  (the ratio SE(n=600)/SE(n=2400) was 1.42, where a correct SE gives 2.00), and its
-  *square* matched the Monte Carlo SD of the estimator over 300 replicates. The
-  NIE/NDE tables use the covariance matrix directly and were always correct.
+A fourth correction — `hetermed_inf()`'s coefficient standard errors, which were
+square-rooted twice (`sqrt(diag(cov))` gives standard errors, and each table then
+applied `sqrt()` again, inflating every SE, z-value, p-value and CI in the
+`alpha`/`beta`/`gamma` tables by roughly 7×) — now lives in the **method source**
+rather than in the build script, so it is not listed above. It was confirmed two ways:
+the old value scaled as `n^(-1/4)` instead of `n^(-1/2)` (the ratio SE(n=600)/SE(n=2400)
+was 1.42, where a correct SE gives 2.00), and its *square* matched the Monte Carlo SD of
+the estimator over 300 replicates. The NIE/NDE tables use the covariance matrix directly
+and were always correct. The assembly step now *asserts* the correction is present, so
+pointing the manifest back at an uncorrected source fails the build rather than silently
+regressing.
 
 ## Python package
 

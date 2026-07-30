@@ -63,7 +63,10 @@ METHODS <- list(
   ),
   heteromed = list(
     title = "Heterogeneous mediation effects",
-    files = "hetero_mediation/V1/HeterMed.R"
+    # V2 is the author's corrected source: it drops the six spurious sqrt() calls
+    # that had been applied to already-computed standard errors in fit.inf.OLS.
+    # No assembly patch is needed -- see the guard below.
+    files = "hetero_mediation/V2/HeterMed.R"
   )
 )
 
@@ -189,35 +192,41 @@ patch_pathwaylasso <- function(lines) {
 }
 
 ##############################################################################
-# heteromed correction: fit.inf.OLS() applies sqrt() TWICE to the coefficient
-# standard errors. It computes
+# heteromed guard (was an assembly patch until hetero_mediation/V2 landed).
+#
+# fit.inf.OLS() used to apply sqrt() TWICE to the coefficient standard errors:
+# it computes
 #     vecTheta.se <- sqrt(diag(cov.vecTheta))   # already standard errors
 #     Theta.se    <- matrix(vecTheta.se, ncol = 2)
-# and then builds every coefficient table with `SE = sqrt(Theta.se[...])`, i.e.
-# the square root of a standard error -- dimensionally incoherent, and it
-# inflates every SE, z-value, p-value and CI in the alpha/beta/gamma tables.
+# and then built every coefficient table with `SE = sqrt(Theta.se[...])` -- the
+# square root of a standard error. That inflated every SE, z-value, p-value and
+# CI in the alpha/beta/gamma tables.
 #
 # Confirmed empirically two ways on hetermed_example():
-#   (a) the reported SE scales as n^(-1/4), not n^(-1/2): the ratio
-#       SE(n=600)/SE(n=2400) is 1.42, whereas a correct SE gives 2.00;
-#   (b) the SQUARE of the reported SE matches the Monte Carlo SD of alpha1-hat
-#       over 300 replicates, while the reported SE itself is ~7x too large.
-# The NIE/NDE tables use cov.vecTheta directly (t(h) %*% cov.vecTheta %*% h) and
-# are unaffected.
+#   (a) the reported SE scaled as n^(-1/4), not n^(-1/2): the ratio
+#       SE(n=600)/SE(n=2400) was 1.42, whereas a correct SE gives 2.00;
+#   (b) the SQUARE of the reported SE matched the Monte Carlo SD of alpha1-hat
+#       over 300 replicates, while the reported SE itself was ~7x too large.
 #
-# Fix: drop the six spurious sqrt() calls so the tables report Theta.se itself.
+# The correction now lives in the method source (V2), so instead of patching we
+# assert it is present -- this fails loudly if the manifest is ever pointed back
+# at an uncorrected file.
 ##############################################################################
-patch_heteromed <- function(lines) {
-  idx <- grep("^\\s*(alpha0|alpha1|gamma0|gamma1|beta0|beta1)\\.out<-data\\.frame\\(Estimate=.*SE=sqrt\\(Theta\\.se\\[",
-              lines)
-  if (length(idx) != 6L)
-    stop("heteromed patch: expected 6 coefficient-table lines, found ", length(idx))
-  for (i in idx) {
-    before <- lines[i]
-    lines[i] <- sub("SE=sqrt(Theta.se[", "SE=(Theta.se[", lines[i], fixed = TRUE)
-    if (identical(before, lines[i]))
-      stop("heteromed patch: substitution failed on line ", i)
-  }
+check_heteromed <- function(lines) {
+  bad <- grep("SE=sqrt(Theta.se[", lines, fixed = TRUE)
+  if (length(bad))
+    stop("heteromed: source still applies sqrt() to already-computed standard ",
+         "errors on ", length(bad), " line(s) (", paste(bad, collapse = ", "),
+         "). Point the manifest at hetero_mediation/V2/HeterMed.R.")
+  # Count only the ANALYTIC tables, i.e. the ones built from Theta.se in
+  # fit.inf.OLS. fit.inf.genlasso has six more coefficient tables whose SEs are
+  # bootstrap SDs (`SE = apply(..., sd)`); those never had the sqrt problem and
+  # must not be counted here.
+  n_tab <- length(grep("\\.out<-data\\.frame\\(Estimate=.*SE=\\(?Theta\\.se\\[", lines))
+  if (n_tab != 6L)
+    stop("heteromed: expected 6 analytic (Theta.se-based) coefficient-table ",
+         "lines in fit.inf.OLS, found ", n_tab,
+         " -- the source layout changed; re-check the standard-error handling.")
   lines
 }
 
@@ -236,7 +245,7 @@ for (id in names(METHODS)) {
                  gma          = patch_gma(body),
                  gmed         = patch_gmed(body),
                  pathwaylasso = patch_pathwaylasso(body),
-                 heteromed    = patch_heteromed(body),
+                 heteromed    = check_heteromed(body),
                  body)
 
   header <- c(
