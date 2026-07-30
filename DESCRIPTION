@@ -1,0 +1,34 @@
+Package: MedMethods
+Type: Package
+Title: Mediation Analysis Methods for Complex and High-Dimensional Data
+Version: 0.1.0
+Date: 2026-07-29
+Authors@R: person("Yi", "Zhao", email = "zhaoyi1026@gmail.com",
+                  role = c("aut", "cre"))
+Description: A unified collection of causal mediation analysis methods for
+    settings that go beyond a single scalar mediator, including hierarchically
+    structured and time series data with unmeasured mediator-outcome
+    confounding, high-dimensional mediators with sparse pathway estimation,
+    multiple exposures and multiple mediators, two blocks of high-dimensional
+    mediators, functional treatments/mediators/outcomes, covariance (graph)
+    mediators, and heterogeneous mediation effects. Each method is provided as
+    a thin wrapper over the authors' original implementation.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.0)
+Imports:
+    MASS,
+    nlme,
+    lme4,
+    car,
+    genlasso,
+    glmnet,
+    mediation,
+    stats,
+    graphics
+Suggests:
+    optimx,
+    knitr,
+    rmarkdown
+Roxygen: list(markdown = TRUE)
+NeedsCompilation: no
